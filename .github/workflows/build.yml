@@ -14,20 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download AutoHotkey v2 (from GitHub releases)
+      - name: Install AutoHotkey v2 (includes Ahk2Exe compiler)
         shell: pwsh
         run: |
-          $url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip"
-          Invoke-WebRequest -Uri $url -OutFile ahk.zip
-          Expand-Archive -Path ahk.zip -DestinationPath ahk
+          $url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19_setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile ahk-setup.exe
+          Start-Process -FilePath .\ahk-setup.exe -ArgumentList "/S" -Wait
+          $compiler = "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe"
+          if (!(Test-Path $compiler)) { throw "Ahk2Exe.exe not found after install" }
 
       - name: Compile EdgeScroll.exe
         shell: pwsh
         run: |
-          $compiler = (Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path ahk | Select-Object -First 1).FullName
-          if (!$compiler) { throw "Ahk2Exe.exe not found in the AutoHotkey zip" }
-          $base = "ahk/AutoHotkey64.exe"
-          & $compiler /in EdgeScroll.ahk /out EdgeScroll.exe /base $base /silent verbose
+          & "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe" `
+            /in EdgeScroll.ahk /out EdgeScroll.exe `
+            /base "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe" /silent verbose
           if (!(Test-Path EdgeScroll.exe)) { throw "Compilation failed" }
 
       - name: Upload artifact
