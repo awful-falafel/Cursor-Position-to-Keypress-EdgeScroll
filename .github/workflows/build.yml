@@ -18,14 +18,19 @@ jobs:
         shell: pwsh
         run: |
           choco install autohotkey.install --version 2.0.19 -y --no-progress
-          $compiler = (Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path "C:\Program Files\AutoHotkey" | Select-Object -First 1).FullName
-          if (!$compiler) { throw "Ahk2Exe.exe not found after install" }
-          "AHK2EXE=$compiler" | Out-File $env:GITHUB_ENV -Append
+          $hits = Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path "C:\Program Files", "C:\Program Files (x86)", "C:\ProgramData\chocolatey" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (!$hits) {
+            Get-ChildItem -Recurse -Directory -Path "C:\Program Files" -Filter "*AutoHotkey*" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
+            choco list --local-only
+            throw "Ahk2Exe.exe not found after install"
+          }
+          "AHK2EXE=$($hits.FullName)" | Out-File $env:GITHUB_ENV -Append
 
       - name: Compile EdgeScroll.exe
         shell: pwsh
         run: |
-          $base = (Get-ChildItem -Recurse -Filter AutoHotkey64.exe -Path "C:\Program Files\AutoHotkey" | Select-Object -First 1).FullName
+          $base = (Get-ChildItem -Recurse -Filter AutoHotkey64.exe -Path "C:\Program Files" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+          if (!$base) { throw "AutoHotkey64.exe not found" }
           & $env:AHK2EXE /in EdgeScroll.ahk /out EdgeScroll.exe /base $base /silent verbose
           if (!(Test-Path EdgeScroll.exe)) { throw "Compilation failed" }
 
