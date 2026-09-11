@@ -1,0 +1,48 @@
+name: Build Windows EXE
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download AutoHotkey v2
+        shell: pwsh
+        run: |
+          $url = "https://www.autohotkey.com/download/ahk-v2.zip"
+          Invoke-WebRequest -Uri $url -OutFile ahk-v2.zip
+          Expand-Archive -Path ahk-v2.zip -DestinationPath ahk
+
+      - name: Locate Ahk2Exe
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path ahk | Select-Object -First 1
+          "AHK2EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $v2dir = Split-Path (Get-ChildItem -Recurse -Filter AutoHotkey64.exe -Path ahk | Select-Object -First 1).FullName
+          "AHK_V2DIR=$v2dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Compile EdgeScroll.exe
+        shell: pwsh
+        run: |
+          & $env:AHK2EXE /in EdgeScroll.ahk /out EdgeScroll.exe /base "$env:AHK_V2DIR\AutoHotkey64.exe" /silent verbose
+          if (!(Test-Path EdgeScroll.exe)) { throw "Compilation failed" }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EdgeScroll-windows
+          path: EdgeScroll.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: EdgeScroll.exe
