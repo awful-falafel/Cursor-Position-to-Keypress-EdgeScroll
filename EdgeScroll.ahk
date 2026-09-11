@@ -216,36 +216,26 @@ ToggleGameMode(*) {
 ; trigger-zone field.
 
 ; ---------------- Key capture (press a key) ----------------
-; A lone modifier shouldn't end a capture, so Shift+W yields "w".
-IsModifierKey(name) {
-    return name ~= "^(Control|Ctrl|LControl|RControl|Shift|LShift|RShift|Alt|LAlt|RAlt|LWin|RWin|AppsKey)$"
-}
-
 CaptureKeyFor(edge, current) {
     static capGui := unset
     if IsSet(capGui)
         capGui.Destroy()
     capGui := Gui("+AlwaysOnTop", "EdgeScroll - Set " edge " edge key")
-    capGui.AddText(, "Press a key for the " edge " edge...`nEsc (or a timeout) keeps the current key.")
+    capGui.AddText(, "Press a key for the " edge " edge...`nEsc keeps the current key.")
     capGui.Show()
-    ; V is required so text keys (letters) terminate the hook; without it they
-    ; are only collected into the Input buffer. KeyOpt E ends input on any key
-    ; (arrows, numpad, F-keys, letters) and returns its normalized name; the
-    ; modifiers are excluded so Shift+W yields "w".
+    ; Bare single-key capture: any key ends the hook (KeyOpt E) and its
+    ; normalized name is returned. Letters may report via EndKey or Input.
     ih := InputHook("V T6")
-    ih.VisibleNonText := false
     ih.KeyOpt("{All}", "E")
-    ih.KeyOpt("LControl RControl LShift RShift LAlt RAlt LWin RWin", "-E")
     ih.Start()
     ih.Wait()
     capGui.Destroy()
-    if (ih.EndReason = "EndKey") {
-        name := ih.EndKey
-        if (name = "Escape" || IsModifierKey(name))
-            return current
-        return name
-    }
-    return current
+    name := ih.EndKey
+    if (name = "")
+        name := ih.Input
+    if (name = "Escape" || name = "")
+        return current
+    return name
 }
 
 ; Bind a key button so its click handler captures its own edge name
