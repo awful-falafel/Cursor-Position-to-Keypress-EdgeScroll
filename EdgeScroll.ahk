@@ -246,6 +246,15 @@ CaptureKeyFor(edge, current) {
     return current
 }
 
+; Bind a key button so its click handler captures its own edge name
+; (a for-loop variable captured by a closure isn't valid at click time).
+BindKeyButton(btn, edge, keys) {
+    btn.OnEvent("Click", (*) => (
+        keys[edge] := CaptureKeyFor(edge, keys[edge]),
+        btn.Text := keys[edge]
+    ))
+}
+
 ShowSettings(*) {
     static settingsGui := unset
     if IsSet(settingsGui)
@@ -278,11 +287,10 @@ ShowSettings(*) {
     kBottomBtn := settingsGui.AddButton("x112 y304 w80", uiKeys["bottom"])
     settingsGui.AddText("x14 y334", "Right edge:")
     kRightBtn := settingsGui.AddButton("x112 y332 w80", uiKeys["right"])
-    for e, btn in Map("left", kLeftBtn, "right", kRightBtn, "top", kTopBtn, "bottom", kBottomBtn)
-        btn.OnEvent("Click", (*) => (
-            uiKeys[e] := CaptureKeyFor(e, uiKeys[e]),
-            btn.Text := uiKeys[e]
-        ))
+    BindKeyButton(kTopBtn, "top", uiKeys)
+    BindKeyButton(kLeftBtn, "left", uiKeys)
+    BindKeyButton(kBottomBtn, "bottom", uiKeys)
+    BindKeyButton(kRightBtn, "right", uiKeys)
 
     settingsGui.AddText("x14 y362", "Focus process (empty = any process, e.g. game.exe)")
     procEdit := settingsGui.AddEdit("x14 y380 w280", targetProcess)
