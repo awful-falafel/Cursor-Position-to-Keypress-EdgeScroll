@@ -228,10 +228,12 @@ CaptureKeyFor(edge, current) {
     capGui := Gui("+AlwaysOnTop", "EdgeScroll - Set " edge " edge key")
     capGui.AddText(, "Press a key for the " edge " edge...`nEsc (or a timeout) keeps the current key.")
     capGui.Show()
-    ; KeyOpt E ends input on any key (arrows, numpad, F-keys, letters) and
-    ; returns its normalized name; modifiers are excluded so Shift+W yields "w".
-    ; Keys are blocked (not sent to the app) while capturing.
-    ih := InputHook("T6")
+    ; V is required so text keys (letters) terminate the hook; without it they
+    ; are only collected into the Input buffer. KeyOpt E ends input on any key
+    ; (arrows, numpad, F-keys, letters) and returns its normalized name; the
+    ; modifiers are excluded so Shift+W yields "w".
+    ih := InputHook("V T6")
+    ih.VisibleNonText := false
     ih.KeyOpt("{All}", "E")
     ih.KeyOpt("LControl RControl LShift RShift LAlt RAlt LWin RWin", "-E")
     ih.Start()
