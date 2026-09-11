@@ -253,42 +253,43 @@ ShowSettings(*) {
     settingsGui := Gui("+AlwaysOnTop", "EdgeScroll - Settings")
     settingsGui.MarginX := 14, settingsGui.MarginY := 12
 
-    enChk := settingsGui.AddCheckBox("Checked" (enabled ? 1 : 0), "Edge scrolling active")
-    gmChk := settingsGui.AddCheckBox("y+8 Checked" (gameMode ? 1 : 0), "Game Mode (lower-level key injection)")
-    asChk := settingsGui.AddCheckBox("y+8 Checked" (autostart ? 1 : 0), "Start with Windows")
+    ; Explicit absolute coordinates so rows never chain/overlap.
+    enChk := settingsGui.AddCheckBox("x14 y12 Checked" (enabled ? 1 : 0), "Edge scrolling active")
+    gmChk := settingsGui.AddCheckBox("x14 y34 Checked" (gameMode ? 1 : 0), "Game Mode (lower-level key injection)")
+    asChk := settingsGui.AddCheckBox("x14 y56 Checked" (autostart ? 1 : 0), "Start with Windows")
 
-    settingsGui.AddText("y+14", "Trigger zone (pixels from edge)")
-    zoneEdit := settingsGui.AddEdit("Number w80 y+4", String(edgeThreshold))
+    settingsGui.AddText("x14 y84", "Trigger zone (pixels from edge)")
+    zoneEdit := settingsGui.AddEdit("Number x14 y102 w80", String(edgeThreshold))
 
-    settingsGui.AddText("y+12", "Poll interval (ms) - how often the cursor is checked")
-    pollEdit := settingsGui.AddEdit("Number w80 y+4", String(pollMs))
+    settingsGui.AddText("x14 y132", "Poll interval (ms) - how often the cursor is checked")
+    pollEdit := settingsGui.AddEdit("Number x14 y150 w80", String(pollMs))
 
-    settingsGui.AddText("y+12", "Repeat interval (ms) - key-down re-send rate while held")
-    repeatEdit := settingsGui.AddEdit("Number w80 y+4", String(repeatMs))
+    settingsGui.AddText("x14 y180", "Repeat interval (ms) - key-down re-send rate while held")
+    repeatEdit := settingsGui.AddEdit("Number x14 y198 w80", String(repeatMs))
 
     uiKeys := Map("left", edgeKeys["left"], "right", edgeKeys["right"],
         "top", edgeKeys["top"], "bottom", edgeKeys["bottom"])
-    settingsGui.AddText("y+14", "Edge keys (click a button, then press a key)")
-    settingsGui.AddText("w90 y+6", "Left edge:")
-    kLeftBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["left"])
-    settingsGui.AddText("w90 y+8", "Right edge:")
-    kRightBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["right"])
-    settingsGui.AddText("w90 y+8", "Top edge:")
-    kTopBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["top"])
-    settingsGui.AddText("w90 y+8", "Bottom edge:")
-    kBottomBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["bottom"])
+    settingsGui.AddText("x14 y228", "Edge keys (click a button, then press a key)")
+    settingsGui.AddText("x14 y250", "Left edge:")
+    kLeftBtn := settingsGui.AddButton("x112 y248 w80", uiKeys["left"])
+    settingsGui.AddText("x14 y278", "Right edge:")
+    kRightBtn := settingsGui.AddButton("x112 y276 w80", uiKeys["right"])
+    settingsGui.AddText("x14 y306", "Top edge:")
+    kTopBtn := settingsGui.AddButton("x112 y304 w80", uiKeys["top"])
+    settingsGui.AddText("x14 y334", "Bottom edge:")
+    kBottomBtn := settingsGui.AddButton("x112 y332 w80", uiKeys["bottom"])
     for e, btn in Map("left", kLeftBtn, "right", kRightBtn, "top", kTopBtn, "bottom", kBottomBtn)
         btn.OnEvent("Click", (*) => (
             uiKeys[e] := CaptureKeyFor(e, uiKeys[e]),
             btn.Text := uiKeys[e]
         ))
 
-    settingsGui.AddText("y+14", "Focus process (empty = any process, e.g. game.exe)")
-    procEdit := settingsGui.AddEdit("w280 y+4", targetProcess)
-    pickBtn := settingsGui.AddButton("w280 y+4", "Choose from running windows...")
+    settingsGui.AddText("x14 y362", "Focus process (empty = any process, e.g. game.exe)")
+    procEdit := settingsGui.AddEdit("x14 y380 w280", targetProcess)
+    pickBtn := settingsGui.AddButton("x14 y406 w280", "Choose from running windows...")
 
-    saveBtn := settingsGui.AddButton("Default w90 y+14", "Save")
-    cancelBtn := settingsGui.AddButton("w90 x+12", "Cancel")
+    saveBtn := settingsGui.AddButton("Default x14 y438 w90", "Save")
+    cancelBtn := settingsGui.AddButton("x116 y438 w90", "Cancel")
     settingsGui.OnEvent("Close", (*) => settingsGui.Destroy())
 
     pickBtn.OnEvent("Click", (*) => (
