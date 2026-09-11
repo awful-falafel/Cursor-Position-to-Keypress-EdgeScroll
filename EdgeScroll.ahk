@@ -215,6 +215,37 @@ ToggleGameMode(*) {
 ; NOTE: CycleThreshold was replaced by the Settings window's editable
 ; trigger-zone field.
 
+; ---------------- Key capture (press a key) ----------------
+; A lone modifier shouldn't end a capture, so Shift+W yields "w".
+IsModifierKey(name) {
+    return name ~= "^(Control|Ctrl|LControl|RControl|Shift|LShift|RShift|Alt|LAlt|RAlt|LWin|RWin|AppsKey)$"
+}
+
+CaptureKeyFor(edge, current) {
+    static capGui := unset
+    if IsSet(capGui)
+        capGui.Destroy()
+    capGui := Gui("+AlwaysOnTop", "EdgeScroll - Set " edge " edge key")
+    capGui.AddText(, "Press a key for the " edge " edge...`nEsc (or a timeout) keeps the current key.")
+    capGui.Show()
+    ; KeyOpt E ends input on any key (arrows, numpad, F-keys, letters) and
+    ; returns its normalized name; modifiers are excluded so Shift+W yields "w".
+    ; Keys are blocked (not sent to the app) while capturing.
+    ih := InputHook("T6")
+    ih.KeyOpt("{All}", "E")
+    ih.KeyOpt("LControl RControl LShift RShift LAlt RAlt LWin RWin", "-E")
+    ih.Start()
+    ih.Wait()
+    capGui.Destroy()
+    if (ih.EndReason = "EndKey") {
+        name := ih.EndKey
+        if (name = "Escape" || IsModifierKey(name))
+            return current
+        return name
+    }
+    return current
+}
+
 ShowSettings(*) {
     static settingsGui := unset
     if IsSet(settingsGui)
@@ -235,15 +266,22 @@ ShowSettings(*) {
     settingsGui.AddText("y+12", "Repeat interval (ms) - key-down re-send rate while held")
     repeatEdit := settingsGui.AddEdit("Number w80 y+4", String(repeatMs))
 
-    settingsGui.AddText("y+14", "Edge keys (single letter or AHK key name, e.g. Left, Space)")
+    uiKeys := Map("left", edgeKeys["left"], "right", edgeKeys["right"],
+        "top", edgeKeys["top"], "bottom", edgeKeys["bottom"])
+    settingsGui.AddText("y+14", "Edge keys (click a button, then press a key)")
     settingsGui.AddText("w90 y+6", "Left edge:")
-    kLeftEdit := settingsGui.AddEdit("w80 x+8 y-4", edgeKeys["left"])
+    kLeftBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["left"])
     settingsGui.AddText("w90 y+8", "Right edge:")
-    kRightEdit := settingsGui.AddEdit("w80 x+8 y-4", edgeKeys["right"])
+    kRightBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["right"])
     settingsGui.AddText("w90 y+8", "Top edge:")
-    kTopEdit := settingsGui.AddEdit("w80 x+8 y-4", edgeKeys["top"])
+    kTopBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["top"])
     settingsGui.AddText("w90 y+8", "Bottom edge:")
-    kBottomEdit := settingsGui.AddEdit("w80 x+8 y-4", edgeKeys["bottom"])
+    kBottomBtn := settingsGui.AddButton("w80 x+8 y-4", uiKeys["bottom"])
+    for e, btn in Map("left", kLeftBtn, "right", kRightBtn, "top", kTopBtn, "bottom", kBottomBtn)
+        btn.OnEvent("Click", (*) => (
+            uiKeys[e] := CaptureKeyFor(e, uiKeys[e]),
+            btn.Text := uiKeys[e]
+        ))
 
     settingsGui.AddText("y+14", "Focus process (empty = any process, e.g. game.exe)")
     procEdit := settingsGui.AddEdit("w280 y+4", targetProcess)
@@ -267,8 +305,8 @@ ShowSettings(*) {
             MsgBox("All numeric values must be at least 1.", "EdgeScroll", 48)
             return
         }
-        newKeys := Map("left", kLeftEdit.Value, "right", kRightEdit.Value,
-            "top", kTopEdit.Value, "bottom", kBottomEdit.Value)
+        newKeys := Map("left", uiKeys["left"], "right", uiKeys["right"],
+            "top", uiKeys["top"], "bottom", uiKeys["bottom"])
         for k, v in newKeys {
             v := Trim(v)
             if (v = "") {

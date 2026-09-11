@@ -51,8 +51,9 @@ menu's default action).
 
 ## Settings
 
-- **Edge keys** — remap what each screen edge presses. Any single letter or
-  AHK key name works (`Left`, `Space`, `Up`, ...). Defaults are WASD.
+- **Edge keys** — click a button next to an edge, then press a key to bind it.
+  Works with any key (letters, arrows, numpad, F-keys); modifiers are ignored so
+  Shift+W records `w`. Defaults are WASD.
 - **Start with Windows** — adds a `HKCU` Run entry so EdgeScroll launches at
   login. Off by default.
 
