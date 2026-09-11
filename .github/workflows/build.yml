@@ -14,25 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download AutoHotkey v2
+      - name: Download AutoHotkey v2 (from GitHub releases)
         shell: pwsh
         run: |
-          $url = "https://www.autohotkey.com/download/ahk-v2.zip"
-          Invoke-WebRequest -Uri $url -OutFile ahk-v2.zip
-          Expand-Archive -Path ahk-v2.zip -DestinationPath ahk
-
-      - name: Locate Ahk2Exe
-        shell: pwsh
-        run: |
-          $exe = Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path ahk | Select-Object -First 1
-          "AHK2EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
-          $v2dir = Split-Path (Get-ChildItem -Recurse -Filter AutoHotkey64.exe -Path ahk | Select-Object -First 1).FullName
-          "AHK_V2DIR=$v2dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip"
+          Invoke-WebRequest -Uri $url -OutFile ahk.zip
+          Expand-Archive -Path ahk.zip -DestinationPath ahk
 
       - name: Compile EdgeScroll.exe
         shell: pwsh
         run: |
-          & $env:AHK2EXE /in EdgeScroll.ahk /out EdgeScroll.exe /base "$env:AHK_V2DIR\AutoHotkey64.exe" /silent verbose
+          $compiler = (Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path ahk | Select-Object -First 1).FullName
+          if (!$compiler) { throw "Ahk2Exe.exe not found in the AutoHotkey zip" }
+          $base = "ahk/AutoHotkey64.exe"
+          & $compiler /in EdgeScroll.ahk /out EdgeScroll.exe /base $base /silent verbose
           if (!(Test-Path EdgeScroll.exe)) { throw "Compilation failed" }
 
       - name: Upload artifact

@@ -7,9 +7,23 @@ players who can't comfortably use WASD.
 
 ## Run it
 
+**Option A — prebuilt EXE:** grab `EdgeScroll.exe` from the
+[Releases](../../releases) page and run it. No AutoHotkey install needed.
+
+**Option B — from source:**
 1. Install [AutoHotkey v2](https://www.autohotkey.com/).
 2. Double-click `EdgeScroll.ahk`. It lives in the tray.
 3. (Optional) Put a shortcut in `shell:startup` to autostart with Windows.
+
+### Building the EXE yourself
+
+Push a `v*` tag (or run the workflow manually from the Actions tab) and
+GitHub Actions compiles `EdgeScroll.exe` and attaches it to the release.
+Locally, with AutoHotkey v2 installed:
+
+```
+Ahk2Exe /in EdgeScroll.ahk /out EdgeScroll.exe /base AutoHotkey64.exe
+```
 
 ## How it works
 
@@ -25,9 +39,14 @@ players who can't comfortably use WASD.
 - **Game Mode** — same injection path today; the toggle exists so elevated
   games can be supported by simply running the script *as Administrator* when
   playing. If a game ignores input, restart EdgeScroll elevated.
-- **Edge zone** — cycles how many pixels from the edge count as "at the edge"
-  (1 px = literally right up against the edge).
+- **Settings...** — opens a window with the trigger zone (pixels from the
+  edge), poll/repeat intervals, and the focus-process picker.
+- **Focus process** — only trigger while a chosen program (e.g. `game.exe`)
+  is the foreground window.
 - **Exit** — releases all held keys and quits.
+
+Double-left-clicking the tray icon toggles EdgeScroll on/off (it's the
+menu's default action).
 
 ## Config (`EdgeScroll.ini`, created on first toggle)
 
@@ -35,11 +54,15 @@ players who can't comfortably use WASD.
 [Settings]
 EdgeThreshold=1   ; pixels from the physical edge that trigger
 PollInterval=10   ; ms between cursor checks
+RepeatInterval=30 ; ms between key-down re-sends while held
 
 [State]
 Enabled=1
 GameMode=0
+TargetProcess=   ; empty = any process
 ```
+
+See `EdgeScroll.ini.example` for a starting point.
 
 To remap edges to other keys, edit the `edgeKeys` map at the top of the script
 (e.g. `"left", "Left"` for arrow keys).

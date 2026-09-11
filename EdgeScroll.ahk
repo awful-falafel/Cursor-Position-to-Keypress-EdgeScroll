@@ -145,6 +145,13 @@ RepeatHeldKeys() {
             SendKey(edgeKeys[name], true)
 }
 
+; Release anything held and quit cleanly (tray Exit or logoff).
+OnExit(CleanupAndExit)
+
+CleanupAndExit(reason, code) {
+    ReleaseAll()
+}
+
 ; ---------------- Tray UI ----------------
 tray := A_TrayMenu
 tray.Delete() ; rebuild cleanly
@@ -209,6 +216,7 @@ ShowSettings(*) {
 
     saveBtn := settingsGui.AddButton("Default w90 y+14", "Save")
     cancelBtn := settingsGui.AddButton("w90 x+12", "Cancel")
+    settingsGui.OnEvent("Close", (*) => settingsGui.Destroy())
 
     pickBtn.OnEvent("Click", (*) => (
         ShowProcessPicker(),
