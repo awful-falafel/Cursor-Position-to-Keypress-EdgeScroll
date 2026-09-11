@@ -270,14 +270,14 @@ ShowSettings(*) {
     uiKeys := Map("left", edgeKeys["left"], "right", edgeKeys["right"],
         "top", edgeKeys["top"], "bottom", edgeKeys["bottom"])
     settingsGui.AddText("x14 y228", "Edge keys (click a button, then press a key)")
-    settingsGui.AddText("x14 y250", "Left edge:")
-    kLeftBtn := settingsGui.AddButton("x112 y248 w80", uiKeys["left"])
-    settingsGui.AddText("x14 y278", "Right edge:")
-    kRightBtn := settingsGui.AddButton("x112 y276 w80", uiKeys["right"])
-    settingsGui.AddText("x14 y306", "Top edge:")
-    kTopBtn := settingsGui.AddButton("x112 y304 w80", uiKeys["top"])
-    settingsGui.AddText("x14 y334", "Bottom edge:")
-    kBottomBtn := settingsGui.AddButton("x112 y332 w80", uiKeys["bottom"])
+    settingsGui.AddText("x14 y250", "Top edge:")
+    kTopBtn := settingsGui.AddButton("x112 y248 w80", uiKeys["top"])
+    settingsGui.AddText("x14 y278", "Left edge:")
+    kLeftBtn := settingsGui.AddButton("x112 y276 w80", uiKeys["left"])
+    settingsGui.AddText("x14 y306", "Bottom edge:")
+    kBottomBtn := settingsGui.AddButton("x112 y304 w80", uiKeys["bottom"])
+    settingsGui.AddText("x14 y334", "Right edge:")
+    kRightBtn := settingsGui.AddButton("x112 y332 w80", uiKeys["right"])
     for e, btn in Map("left", kLeftBtn, "right", kRightBtn, "top", kTopBtn, "bottom", kBottomBtn)
         btn.OnEvent("Click", (*) => (
             uiKeys[e] := CaptureKeyFor(e, uiKeys[e]),
