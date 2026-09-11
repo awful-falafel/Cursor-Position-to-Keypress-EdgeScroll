@@ -17,16 +17,16 @@ jobs:
       - name: Install AutoHotkey v2 via Chocolatey
         shell: pwsh
         run: |
-          choco install autohotkey -y --no-progress
-          $compiler = "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe"
-          if (!(Test-Path $compiler)) { throw "Ahk2Exe.exe not found after install" }
+          choco install autohotkey.install --version 2.0.19 -y --no-progress
+          $compiler = (Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path "C:\Program Files\AutoHotkey" | Select-Object -First 1).FullName
+          if (!$compiler) { throw "Ahk2Exe.exe not found after install" }
+          "AHK2EXE=$compiler" | Out-File $env:GITHUB_ENV -Append
 
       - name: Compile EdgeScroll.exe
         shell: pwsh
         run: |
-          & "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe" `
-            /in EdgeScroll.ahk /out EdgeScroll.exe `
-            /base "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe" /silent verbose
+          $base = (Get-ChildItem -Recurse -Filter AutoHotkey64.exe -Path "C:\Program Files\AutoHotkey" | Select-Object -First 1).FullName
+          & $env:AHK2EXE /in EdgeScroll.ahk /out EdgeScroll.exe /base $base /silent verbose
           if (!(Test-Path EdgeScroll.exe)) { throw "Compilation failed" }
 
       - name: Upload artifact
