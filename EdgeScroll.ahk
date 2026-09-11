@@ -165,7 +165,7 @@ ApplyAutostart(on) {
     if on {
         ; Compiled exe: quote the exe. Source script: run via the AHK interpreter.
         cmd := A_IsCompiled ? '"' A_ScriptFullPath '"' : '"' A_AhkPath '" "' A_ScriptFullPath '"'
-        RegWrite(cmd, regKey, "EdgeScroll")
+        RegWrite(cmd, "REG_SZ", regKey, "EdgeScroll")
     } else {
         ; No entry exists unless the user enabled autostart at least once.
         try
