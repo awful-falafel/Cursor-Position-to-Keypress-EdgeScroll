@@ -3,7 +3,14 @@ EdgeThreshold=1
 PollInterval=10
 RepeatInterval=30
 
+[Keys]
+left=a
+right=d
+top=w
+bottom=s
+
 [State]
 Enabled=1
 GameMode=0
 TargetProcess=
+Autostart=0

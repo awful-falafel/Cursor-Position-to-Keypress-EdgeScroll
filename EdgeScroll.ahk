@@ -28,14 +28,19 @@ gameMode := IniRead(iniFile, "State", "GameMode", 0)
 ; Optional: only trigger while this process (e.g. "game.exe") is active.
 ; Empty = always active. Selected via the tray "Focus process" picker.
 targetProcess := IniRead(iniFile, "State", "TargetProcess", "")
+; Launch with Windows (off by default).
+autostart := IniRead(iniFile, "State", "Autostart", 0)
 
-; Edge -> key map (WASD). Edit these strings to remap.
-edgeKeys := Map(
-    "left",   "a",
-    "right",  "d",
-    "top",    "w",
-    "bottom", "s"
-)
+; Edge -> key map (WASD by default). Editable from the Settings window;
+; values are single letters or AHK key names (e.g. "Left", "Space").
+LoadEdgeKeys() {
+    global iniFile
+    m := Map("left", "a", "right", "d", "top", "w", "bottom", "s")
+    for k, def in m
+        m[k] := Trim(IniRead(iniFile, "Keys", k, def))
+    return m
+}
+edgeKeys := LoadEdgeKeys()
 
 ; ---------------- Primary monitor bounds ----------------
 GetPrimaryBounds() {
@@ -152,6 +157,23 @@ CleanupAndExit(reason, code) {
     ReleaseAll()
 }
 
+; ---------------- Autostart (Windows startup) ----------------
+; Registers/unregisters a HKCU Run entry so EdgeScroll launches with Windows.
+; Off by default; toggled from the Settings window.
+ApplyAutostart(on) {
+    regKey := "HKCU\Software\Microsoft\Windows\CurrentVersion\Run"
+    if on {
+        ; Compiled exe: quote the exe. Source script: run via the AHK interpreter.
+        cmd := A_IsCompiled ? '"' A_ScriptFullPath '"' : '"' A_AhkPath '" "' A_ScriptFullPath '"'
+        RegWrite(cmd, regKey, "EdgeScroll")
+    } else {
+        RegDelete(regKey, "EdgeScroll")
+    }
+}
+
+; Make sure the registry matches the INI on startup (e.g. INI restored from backup).
+ApplyAutostart(autostart)
+
 ; ---------------- Tray UI ----------------
 tray := A_TrayMenu
 tray.Delete() ; rebuild cleanly
@@ -200,6 +222,7 @@ ShowSettings(*) {
 
     enChk := settingsGui.AddCheckBox("Checked" (enabled ? 1 : 0), "Edge scrolling active")
     gmChk := settingsGui.AddCheckBox("y+8 Checked" (gameMode ? 1 : 0), "Game Mode (lower-level key injection)")
+    asChk := settingsGui.AddCheckBox("y+8 Checked" (autostart ? 1 : 0), "Start with Windows")
 
     settingsGui.AddText("y+14", "Trigger zone (pixels from edge)")
     zoneEdit := settingsGui.AddEdit("Number w80 y+4", String(edgeThreshold))
@@ -209,6 +232,16 @@ ShowSettings(*) {
 
     settingsGui.AddText("y+12", "Repeat interval (ms) - key-down re-send rate while held")
     repeatEdit := settingsGui.AddEdit("Number w80 y+4", String(repeatMs))
+
+    settingsGui.AddText("y+14", "Edge keys (single letter or AHK key name, e.g. Left, Space)")
+    settingsGui.AddText("w90", "Left edge:")
+    kLeftEdit := settingsGui.AddEdit("w100 x+8 y-4", edgeKeys["left"])
+    settingsGui.AddText("w90 x+14", "Right edge:")
+    kRightEdit := settingsGui.AddEdit("w100 x+8 y-4", edgeKeys["right"])
+    settingsGui.AddText("w90 y+12", "Top edge:")
+    kTopEdit := settingsGui.AddEdit("w100 x+8 y-4", edgeKeys["top"])
+    settingsGui.AddText("w90 x+14", "Bottom edge:")
+    kBottomEdit := settingsGui.AddEdit("w100 x+8 y-4", edgeKeys["bottom"])
 
     settingsGui.AddText("y+14", "Focus process (empty = any process, e.g. game.exe)")
     procEdit := settingsGui.AddEdit("w280 y+4", targetProcess)
@@ -226,17 +259,43 @@ ShowSettings(*) {
     cancelBtn.OnEvent("Click", (*) => settingsGui.Destroy())
 
     SaveSettings_Click(*) {
-        global edgeThreshold, pollMs, repeatMs, targetProcess, enabled, gameMode
+        global edgeThreshold, pollMs, repeatMs, targetProcess, enabled, gameMode, autostart, edgeKeys, held
         z := Integer(zoneEdit.Value), p := Integer(pollEdit.Value), r := Integer(repeatEdit.Value)
         if (z < 1 || p < 1 || r < 1) {
             MsgBox("All numeric values must be at least 1.", "EdgeScroll", 48)
             return
+        }
+        newKeys := Map("left", kLeftEdit.Value, "right", kRightEdit.Value,
+            "top", kTopEdit.Value, "bottom", kBottomEdit.Value)
+        for k, v in newKeys {
+            v := Trim(v)
+            if (v = "") {
+                MsgBox("Every edge needs a key assigned.", "EdgeScroll", 48)
+                return
+            }
+            newKeys[k] := v
         }
         edgeThreshold := z, pollMs := p, repeatMs := r
         enabled := enChk.Value, gameMode := gmChk.Value
         newProc := Trim(procEdit.Value)
         procChanged := (StrCompare(newProc, targetProcess, true) != 0)
         targetProcess := newProc
+        newAutostart := asChk.Value
+
+        ; Apply keys: release anything held that's about to change, then swap.
+        keysChanged := false
+        for k, v in newKeys
+            if (StrCompare(v, edgeKeys[k], true) != 0)
+                keysChanged := true
+        if keysChanged {
+            for k, v in edgeKeys
+                if (held[k])
+                    SendKey(v, false)
+            edgeKeys := newKeys
+            for k, v in edgeKeys
+                if (held[k])
+                    SendKey(v, true)
+        }
 
         IniWrite(edgeThreshold, iniFile, "Settings", "EdgeThreshold")
         IniWrite(pollMs, iniFile, "Settings", "PollInterval")
@@ -244,7 +303,11 @@ ShowSettings(*) {
         IniWrite(targetProcess, iniFile, "State", "TargetProcess")
         IniWrite(enabled, iniFile, "State", "Enabled")
         IniWrite(gameMode, iniFile, "State", "GameMode")
+        IniWrite(autostart := newAutostart, iniFile, "State", "Autostart")
+        for k, v in edgeKeys
+            IniWrite(v, iniFile, "Keys", k)
 
+        ApplyAutostart(autostart)
         SetTimer(EvaluateEdges, pollMs)
         SetTimer(RepeatHeldKeys, repeatMs)
         if !enabled || (procChanged && !IsTargetActive())

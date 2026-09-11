@@ -40,13 +40,21 @@ Ahk2Exe /in EdgeScroll.ahk /out EdgeScroll.exe /base AutoHotkey64.exe
   games can be supported by simply running the script *as Administrator* when
   playing. If a game ignores input, restart EdgeScroll elevated.
 - **Settings...** — opens a window with the trigger zone (pixels from the
-  edge), poll/repeat intervals, and the focus-process picker.
+  edge), poll/repeat intervals, the edge→key assignments, Start-with-Windows,
+  and the focus-process picker.
 - **Focus process** — only trigger while a chosen program (e.g. `game.exe`)
   is the foreground window.
 - **Exit** — releases all held keys and quits.
 
 Double-left-clicking the tray icon toggles EdgeScroll on/off (it's the
 menu's default action).
+
+## Settings
+
+- **Edge keys** — remap what each screen edge presses. Any single letter or
+  AHK key name works (`Left`, `Space`, `Up`, ...). Defaults are WASD.
+- **Start with Windows** — adds a `HKCU` Run entry so EdgeScroll launches at
+  login. Off by default.
 
 ## Config (`EdgeScroll.ini`, created on first toggle)
 
@@ -56,16 +64,21 @@ EdgeThreshold=1   ; pixels from the physical edge that trigger
 PollInterval=10   ; ms between cursor checks
 RepeatInterval=30 ; ms between key-down re-sends while held
 
+[Keys]
+left=a
+right=d
+top=w
+bottom=s
+
 [State]
 Enabled=1
 GameMode=0
 TargetProcess=   ; empty = any process
+Autostart=0
 ```
 
-See `EdgeScroll.ini.example` for a starting point.
-
-To remap edges to other keys, edit the `edgeKeys` map at the top of the script
-(e.g. `"left", "Left"` for arrow keys).
+See `EdgeScroll.ini.example` for a starting point. The Settings window edits
+all of these at runtime — no need to touch the file by hand.
 
 ## Notes / limitations
 
