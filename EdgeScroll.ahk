@@ -167,7 +167,9 @@ ApplyAutostart(on) {
         cmd := A_IsCompiled ? '"' A_ScriptFullPath '"' : '"' A_AhkPath '" "' A_ScriptFullPath '"'
         RegWrite(cmd, regKey, "EdgeScroll")
     } else {
-        RegDelete(regKey, "EdgeScroll")
+        ; No entry exists unless the user enabled autostart at least once.
+        try
+            RegDelete(regKey, "EdgeScroll")
     }
 }
 
