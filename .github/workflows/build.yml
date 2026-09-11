@@ -14,27 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get AutoHotkey v2 + Ahk2Exe compiler
+      - name: Install AutoHotkey v2 via Chocolatey
         shell: pwsh
         run: |
-          # The portable zip ships the interpreter; the NSIS setup exe ships
-          # Ahk2Exe inside a nested zip — extract both without installing.
-          Invoke-WebRequest -Uri "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip" -OutFile ahk.zip
-          Expand-Archive ahk.zip -DestinationPath ahk
-          Invoke-WebRequest -Uri "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19_setup.exe" -OutFile ahk-setup.exe
-          7z x ahk-setup.exe -oahk-setup | Out-Null
-          $inner = Get-ChildItem -Recurse -Filter "AutoHotkey*.zip" -Path ahk-setup | Select-Object -First 1
-          if (!$inner) { throw "No nested zip found in setup exe" }
-          Expand-Archive $inner.FullName -DestinationPath ahk-full
-          $compiler = (Get-ChildItem -Recurse -Filter Ahk2Exe.exe -Path ahk-full,ahk-setup | Select-Object -First 1).FullName
-          if (!$compiler) { throw "Ahk2Exe.exe not found" }
-          "AHK2EXE=$compiler" | Out-File $env:GITHUB_ENV -Append
-          "AHK_BASE=$((Get-ChildItem -Recurse -Filter AutoHotkey64.exe -Path ahk | Select-Object -First 1).FullName)" | Out-File $env:GITHUB_ENV -Append
+          choco install autohotkey -y --no-progress
+          $compiler = "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe"
+          if (!(Test-Path $compiler)) { throw "Ahk2Exe.exe not found after install" }
 
       - name: Compile EdgeScroll.exe
         shell: pwsh
         run: |
-          & $env:AHK2EXE /in EdgeScroll.ahk /out EdgeScroll.exe /base $env:AHK_BASE /silent verbose
+          & "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe" `
+            /in EdgeScroll.ahk /out EdgeScroll.exe `
+            /base "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe" /silent verbose
           if (!(Test-Path EdgeScroll.exe)) { throw "Compilation failed" }
 
       - name: Upload artifact
