@@ -296,7 +296,7 @@ ShowSettings(*) {
     settingsGui.AddText("x16 y436", "Focus process (empty = any process, e.g. game.exe)")
     procEdit := settingsGui.AddEdit("x16 y454 w280", targetProcess)
     pickBtn := settingsGui.AddButton("x16 y480 w280", "Choose from running windows...")
-    pickBtn.OnEvent("Click", (*) => (ShowProcessPicker(), procEdit.Value := targetProcess))
+    pickBtn.OnEvent("Click", (*) => procEdit.Value := ShowProcessPicker())
 
     saveBtn := settingsGui.AddButton("Default x16 y512 w90", "Save")
 cancelBtn := settingsGui.AddButton("x118 y512 w90", "Cancel")
@@ -425,15 +425,19 @@ ShowProcessPicker(*) {
     cancelBtn.OnEvent("Click", (*) => pickerGui.Destroy())
     clearBtn.OnEvent("Click", (*) => (pickerGui.Destroy(), ApplyChoice("")))
     pickerGui.Show()
+    WinWaitClose("ahk_id " pickerGui.Hwnd)
+    return targetProcess
 }
 
 ApplyChoice(name) {
-    global targetProcess
+    global targetProcess, procEdit
     targetProcess := (name = "(Any process)") ? "" : name
     IniWrite(targetProcess, iniFile, "State", "TargetProcess")
     if !IsTargetActive()
         ReleaseAll()
     UpdateTrayMenu()
+    if IsSet(procEdit)
+        procEdit.Value := targetProcess
 }
 
 IsTargetActive() {
