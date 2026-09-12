@@ -14,3 +14,4 @@ Enabled=1
 GameMode=0
 TargetProcess=
 Autostart=0
+IgnoreOtherMonitors=0

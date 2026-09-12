@@ -30,6 +30,9 @@ gameMode := IniRead(iniFile, "State", "GameMode", 0)
 targetProcess := IniRead(iniFile, "State", "TargetProcess", "")
 ; Launch with Windows (off by default).
 autostart := IniRead(iniFile, "State", "Autostart", 0)
+; When on, EdgeScroll keeps firing the held edge even if the cursor leaves
+; the primary monitor (e.g. the user drags the cursor to a secondary screen).
+ignoreOtherMonitors := IniRead(iniFile, "State", "IgnoreOtherMonitors", 0)
 
 ; Edge -> key map (WASD by default). Editable from the Settings window;
 ; values are single letters or AHK key names (e.g. "Left", "Space").
@@ -77,7 +80,7 @@ SendKey(key, down) {
 held := Map("left", false, "right", false, "top", false, "bottom", false)
 
 EvaluateEdges() {
-    global bounds, edgeThreshold, held, enabled
+    global bounds, edgeThreshold, held, enabled, ignoreOtherMonitors
     if !enabled {
         ReleaseAll()
         return
@@ -85,18 +88,23 @@ EvaluateEdges() {
     CoordMode("Mouse", "Screen")
     MouseGetPos(&mx, &my, &mWin)
 
-    ; Multi-monitor guard: only treat as "at edge" when the cursor is
-    ; actually ON the primary monitor. Without this, a cursor sitting on
-    ; a neighboring monitor shares a coordinate boundary with the
-    ; primary's edge and would falsely hold a movement key.
-    onPrimary := (mx >= bounds.left && mx <= bounds.right
-        && my >= bounds.top && my <= bounds.bottom)
-
     ; Optional process focus: only trigger while the chosen process is
     ; the foreground window's process.
     if !IsTargetActive() {
         ReleaseAll()
         return
+    }
+
+    ; By default, only the primary monitor's edge counts (otherwise a cursor
+    ; sitting on a neighboring monitor at the same coordinate boundary would
+    ; falsely hold a movement key). When "ignore other monitors" is on, the
+    ; secondary monitor is treated as an extension of the primary, so the
+    ; edge keys stay held even if the cursor drags off-screen onto another
+    ; display.
+    onPrimary := true
+    if !ignoreOtherMonitors {
+        onPrimary := (mx >= bounds.left && mx <= bounds.right
+            && my >= bounds.top && my <= bounds.bottom)
     }
 
     atLeft   := onPrimary && (mx <= bounds.left + edgeThreshold - 1)
@@ -258,38 +266,44 @@ ShowSettings(*) {
     enChk := settingsGui.AddCheckBox("x14 y12 Checked" (enabled ? 1 : 0), "Edge scrolling active")
     gmChk := settingsGui.AddCheckBox("x14 y34 Checked" (gameMode ? 1 : 0), "Game Mode (lower-level key injection)")
     asChk := settingsGui.AddCheckBox("x14 y56 Checked" (autostart ? 1 : 0), "Start with Windows")
+    igChk := settingsGui.AddCheckBox("x14 y78 Checked" (ignoreOtherMonitors ? 1 : 0), "Ignore other monitors (keep firing at primary edge)")
 
-    settingsGui.AddText("x14 y84", "Trigger zone (pixels from edge)")
+    settingsGui.AddText("x14 y106", "Trigger zone (pixels from edge)")
     zoneEdit := settingsGui.AddEdit("Number x14 y102 w80", String(edgeThreshold))
 
-    settingsGui.AddText("x14 y132", "Poll interval (ms) - how often the cursor is checked")
-    pollEdit := settingsGui.AddEdit("Number x14 y150 w80", String(pollMs))
+    settingsGui.AddText("x14 y154", "Poll interval (ms) - how often the cursor is checked")
+    pollEdit := settingsGui.AddEdit("Number x14 y172 w80", String(pollMs))
 
-    settingsGui.AddText("x14 y180", "Repeat interval (ms) - key-down re-send rate while held")
-    repeatEdit := settingsGui.AddEdit("Number x14 y198 w80", String(repeatMs))
+    settingsGui.AddText("x14 y202", "Repeat interval (ms) - key-down re-send rate while held")
+    repeatEdit := settingsGui.AddEdit("Number x14 y220 w80", String(repeatMs))
 
     uiKeys := Map("left", edgeKeys["left"], "right", edgeKeys["right"],
         "top", edgeKeys["top"], "bottom", edgeKeys["bottom"])
-    settingsGui.AddText("x14 y228", "Edge keys (click a button, then press a key)")
-    settingsGui.AddText("x14 y250", "Top edge:")
-    kTopBtn := settingsGui.AddButton("x112 y248 w80", uiKeys["top"])
-    settingsGui.AddText("x14 y278", "Left edge:")
-    kLeftBtn := settingsGui.AddButton("x112 y276 w80", uiKeys["left"])
-    settingsGui.AddText("x14 y306", "Bottom edge:")
-    kBottomBtn := settingsGui.AddButton("x112 y304 w80", uiKeys["bottom"])
-    settingsGui.AddText("x14 y334", "Right edge:")
-    kRightBtn := settingsGui.AddButton("x112 y332 w80", uiKeys["right"])
+    settingsGui.AddText("x14 y268", "Edge keys (click a button, then press a key)")
+    settingsGui.AddText("x14 y290", "Top edge:")
+    kTopBtn := settingsGui.AddButton("x112 y288 w80", uiKeys["top"])
+    settingsGui.AddText("x14 y318", "Left edge:")
+    kLeftBtn := settingsGui.AddButton("x112 y316 w80", uiKeys["left"])
+    settingsGui.AddText("x14 y346", "Bottom edge:")
+    kBottomBtn := settingsGui.AddButton("x112 y344 w80", uiKeys["bottom"])
+    settingsGui.AddText("x14 y374", "Right edge:")
+    kRightBtn := settingsGui.AddButton("x112 y372 w80", uiKeys["right"])
     BindKeyButton(kTopBtn, "top", uiKeys)
     BindKeyButton(kLeftBtn, "left", uiKeys)
     BindKeyButton(kBottomBtn, "bottom", uiKeys)
     BindKeyButton(kRightBtn, "right", uiKeys)
 
-    settingsGui.AddText("x14 y362", "Focus process (empty = any process, e.g. game.exe)")
-    procEdit := settingsGui.AddEdit("x14 y380 w280", targetProcess)
-    pickBtn := settingsGui.AddButton("x14 y406 w280", "Choose from running windows...")
+    settingsGui.AddText("x14 y412", "Focus process (empty = any process, e.g. game.exe)")
+    procEdit := settingsGui.AddEdit("x14 y430 w280", targetProcess)
+    pickBtn := settingsGui.AddButton("x14 y456 w280", "Choose from running windows...")
+    for b in procEdit, pickBtn
+        b.OnEvent("Click", (*) => (
+            ShowProcessPicker(),
+            procEdit.Value := targetProcess
+        ))
 
-    saveBtn := settingsGui.AddButton("Default x14 y438 w90", "Save")
-    cancelBtn := settingsGui.AddButton("x116 y438 w90", "Cancel")
+    saveBtn := settingsGui.AddButton("Default x14 y488 w90", "Save")
+    cancelBtn := settingsGui.AddButton("x116 y488 w90", "Cancel")
     settingsGui.OnEvent("Close", (*) => settingsGui.Destroy())
 
     pickBtn.OnEvent("Click", (*) => (
@@ -300,7 +314,7 @@ ShowSettings(*) {
     cancelBtn.OnEvent("Click", (*) => settingsGui.Destroy())
 
     SaveSettings_Click(*) {
-        global edgeThreshold, pollMs, repeatMs, targetProcess, enabled, gameMode, autostart, edgeKeys, held
+        global edgeThreshold, pollMs, repeatMs, targetProcess, enabled, gameMode, autostart, ignoreOtherMonitors, edgeKeys, held
         z := Integer(zoneEdit.Value), p := Integer(pollEdit.Value), r := Integer(repeatEdit.Value)
         if (z < 1 || p < 1 || r < 1) {
             MsgBox("All numeric values must be at least 1.", "EdgeScroll", 48)
@@ -322,6 +336,7 @@ ShowSettings(*) {
         procChanged := (StrCompare(newProc, targetProcess, true) != 0)
         targetProcess := newProc
         newAutostart := asChk.Value
+        newIgnoreOtherMonitors := igChk.Value
 
         ; Apply keys: release anything held that's about to change, then swap.
         keysChanged := false
@@ -345,6 +360,7 @@ ShowSettings(*) {
         IniWrite(enabled, iniFile, "State", "Enabled")
         IniWrite(gameMode, iniFile, "State", "GameMode")
         IniWrite(autostart := newAutostart, iniFile, "State", "Autostart")
+        IniWrite(ignoreOtherMonitors := newIgnoreOtherMonitors, iniFile, "State", "IgnoreOtherMonitors")
         for k, v in edgeKeys
             IniWrite(v, iniFile, "Keys", k)
 
