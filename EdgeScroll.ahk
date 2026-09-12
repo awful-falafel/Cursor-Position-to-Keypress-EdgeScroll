@@ -263,43 +263,43 @@ ShowSettings(*) {
     settingsGui.MarginX := 14, settingsGui.MarginY := 12
 
     ; Explicit absolute coordinates so rows never chain/overlap.
-    enChk := settingsGui.AddCheckBox("x14 y12 Checked" (enabled ? 1 : 0), "Edge scrolling active")
-    gmChk := settingsGui.AddCheckBox("x14 y34 Checked" (gameMode ? 1 : 0), "Game Mode (lower-level key injection)")
-    asChk := settingsGui.AddCheckBox("x14 y56 Checked" (autostart ? 1 : 0), "Start with Windows")
-    igChk := settingsGui.AddCheckBox("x14 y78 Checked" (ignoreOtherMonitors ? 1 : 0), "Ignore other monitors (keep firing at primary edge)")
+    enChk := settingsGui.AddCheckBox("x16 y12 Checked" (enabled ? 1 : 0), "Edge scrolling active")
+    gmChk := settingsGui.AddCheckBox("x16 y34 Checked" (gameMode ? 1 : 0), "Game Mode (lower-level key injection)")
+    asChk := settingsGui.AddCheckBox("x16 y56 Checked" (autostart ? 1 : 0), "Start with Windows")
+    igChk := settingsGui.AddCheckBox("x16 y78 Checked" (ignoreOtherMonitors ? 1 : 0), "Ignore other monitors (keep firing at primary edge)")
 
-    settingsGui.AddText("x14 y106", "Trigger zone (pixels from edge)")
-    zoneEdit := settingsGui.AddEdit("Number x14 y102 w80", String(edgeThreshold))
+    settingsGui.AddText("x16 y108", "Trigger zone (pixels from edge)")
+    zoneEdit := settingsGui.AddEdit("Number x16 y124 w80", String(edgeThreshold))
 
-    settingsGui.AddText("x14 y154", "Poll interval (ms) - how often the cursor is checked")
-    pollEdit := settingsGui.AddEdit("Number x14 y172 w80", String(pollMs))
+    settingsGui.AddText("x16 y162", "Poll interval (ms) - how often the cursor is checked")
+    pollEdit := settingsGui.AddEdit("Number x16 y180 w80", String(pollMs))
 
-    settingsGui.AddText("x14 y202", "Repeat interval (ms) - key-down re-send rate while held")
-    repeatEdit := settingsGui.AddEdit("Number x14 y220 w80", String(repeatMs))
+    settingsGui.AddText("x16 y220", "Repeat interval (ms) - key-down re-send rate while held")
+    repeatEdit := settingsGui.AddEdit("Number x16 y238 w80", String(repeatMs))
 
     uiKeys := Map("left", edgeKeys["left"], "right", edgeKeys["right"],
         "top", edgeKeys["top"], "bottom", edgeKeys["bottom"])
-    settingsGui.AddText("x14 y268", "Edge keys (click a button, then press a key)")
-    settingsGui.AddText("x14 y290", "Top edge:")
-    kTopBtn := settingsGui.AddButton("x112 y288 w80", uiKeys["top"])
-    settingsGui.AddText("x14 y318", "Left edge:")
-    kLeftBtn := settingsGui.AddButton("x112 y316 w80", uiKeys["left"])
-    settingsGui.AddText("x14 y346", "Bottom edge:")
-    kBottomBtn := settingsGui.AddButton("x112 y344 w80", uiKeys["bottom"])
-    settingsGui.AddText("x14 y374", "Right edge:")
-    kRightBtn := settingsGui.AddButton("x112 y372 w80", uiKeys["right"])
+    settingsGui.AddText("x16 y292", "Edge keys (click a button, then press a key)")
+    settingsGui.AddText("x16 y314", "Top edge:")
+    kTopBtn := settingsGui.AddButton("x114 y312 w80", uiKeys["top"])
+    settingsGui.AddText("x16 y342", "Left edge:")
+    kLeftBtn := settingsGui.AddButton("x114 y340 w80", uiKeys["left"])
+    settingsGui.AddText("x16 y370", "Bottom edge:")
+    kBottomBtn := settingsGui.AddButton("x114 y368 w80", uiKeys["bottom"])
+    settingsGui.AddText("x16 y398", "Right edge:")
+    kRightBtn := settingsGui.AddButton("x114 y396 w80", uiKeys["right"])
     BindKeyButton(kTopBtn, "top", uiKeys)
     BindKeyButton(kLeftBtn, "left", uiKeys)
     BindKeyButton(kBottomBtn, "bottom", uiKeys)
     BindKeyButton(kRightBtn, "right", uiKeys)
 
-    settingsGui.AddText("x14 y412", "Focus process (empty = any process, e.g. game.exe)")
-    procEdit := settingsGui.AddEdit("x14 y430 w280", targetProcess)
-    pickBtn := settingsGui.AddButton("x14 y456 w280", "Choose from running windows...")
+    settingsGui.AddText("x16 y436", "Focus process (empty = any process, e.g. game.exe)")
+    procEdit := settingsGui.AddEdit("x16 y454 w280", targetProcess)
+    pickBtn := settingsGui.AddButton("x16 y480 w280", "Choose from running windows...")
     pickBtn.OnEvent("Click", (*) => (ShowProcessPicker(), procEdit.Value := targetProcess))
 
-    saveBtn := settingsGui.AddButton("Default x14 y488 w90", "Save")
-    cancelBtn := settingsGui.AddButton("x116 y488 w90", "Cancel")
+    saveBtn := settingsGui.AddButton("Default x16 y512 w90", "Save")
+    cancelBtn := settingsGui.AddButton("x118 y512 w90", "Cancel")
     settingsGui.OnEvent("Close", (*) => settingsGui.Destroy())
 
     pickBtn.OnEvent("Click", (*) => (
