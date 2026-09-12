@@ -1,63 +1,46 @@
-# EdgeScroll (AutoHotkey v2)
+# Cursor Position to Mimic In-Game EdgeScrolling
 
-Lightweight background app for Windows that sends **WASD** keypresses when the
-mouse cursor touches the extreme edge of the **primary monitor** — replicating
-"edge scrolling" from RTS/MOBA games, built as an accessibility option for
-players who can't comfortably use WASD.
+Lightweight background app (AHK or EXE) that sends keypresses (default **WASD**) when the mouse cursor touches the extreme edges of the **primary monitor**.
 
-## Run it
+This app is intended to support those who desire more accessibility options when replicating "edge scrolling" in games that offer it via keypresses alone.
 
-**Option A — prebuilt EXE:** grab `EdgeScroll.exe` from the
-[Releases](../../releases) page and run it. No AutoHotkey install needed.
+## How to run it
+
+**Option A — prebuilt EXE:** grab `EdgeScroll.exe` from the [Releases](../../releases) page and run it. No AutoHotkey install needed.
+
+**Note:** Windows may throw up a _"Windows protected your PC; Microsoft Defender SmartScreen prevented an unrecognized app from starting. Running this app might put your PC at risk."_ message. It's just because I refuse to pay for a certificate to prove to Microsoft I'm not a criminal. This project's open-code, there's nothing sketchy going on.
+
+Hit 'More info' and run anyway.
+
+You'll then see the app's ⭐ tray icon in your taskbar. If it's disabled by default it'll by a 🚫 icon.
 
 **Option B — from source:**
 1. Install [AutoHotkey v2](https://www.autohotkey.com/).
-2. Double-click `EdgeScroll.ahk`. It lives in the tray.
-3. (Optional) Put a shortcut in `shell:startup` to autostart with Windows.
-
-### Building the EXE yourself
-
-Push a `v*` tag (or run the workflow manually from the Actions tab) and
-GitHub Actions compiles `EdgeScroll.exe` and attaches it to the release.
-Locally, with AutoHotkey v2 installed:
-
-```
-Ahk2Exe /in EdgeScroll.ahk /out EdgeScroll.exe /base AutoHotkey64.exe
-```
+2. Double-click `EdgeScroll.ahk`. It also lives in the tray, identical to the EXE version.
 
 ## How it works
 
-- A 10 ms timer polls the cursor position (negligible CPU).
-- Touching the **leftmost / rightmost / top / bottom pixel** of the primary
-  monitor holds `A` / `D` / `W` / `S` down; moving the cursor away releases it.
-- Keys are sent with scancode-based `keybd_event` injection, which most games
-  accept (unlike `Send`-mode synthetic keys in some engines).
+- A timer polls the cursor position (negligible CPU; can be further relaxed).
+- Dragging your cursor to the top, left, bottom or right edge of your primary monitor holds down the `W`, `A`, `S` or `D` key respectively (can be changed); moving the cursor away releases it.
+- The trigger zones can be increased to your preference.
+- Keys are sent with scancode-based `keybd_event` injection, which most games accept.
 
 ## Tray menu
 
 - **Enable/Disable** — toggles detection (default tray action).
-- **Game Mode** — same injection path today; the toggle exists so elevated
-  games can be supported by simply running the script *as Administrator* when
-  playing. If a game ignores input, restart EdgeScroll elevated.
-- **Settings...** — opens a window with the trigger zone (pixels from the
-  edge), poll/repeat intervals, the edge→key assignments, Start-with-Windows,
-  and the focus-process picker.
-- **Focus process** — only trigger while a chosen program (e.g. `game.exe`)
-  is the foreground window.
-- **Exit** — releases all held keys and quits.
+- **Game Mode** — same injection path today; the toggle exists so elevated games can be supported by simply running the script *as Administrator* when playing. If a game ignores input, restart EdgeScroll elevated.
+- **Settings...** — opens a window with the trigger zone (pixels from the edge), poll/repeat intervals, the edge→key assignments, Start-with-Windows, and the focus-process picker.
+- **Focus process** — have this app only trigger while a chosen program (e.g. `game.exe`) is the foreground window.
+- **Exit** — releases all held keys and quits the app.
 
-Double-left-clicking the tray icon toggles EdgeScroll on/off (it's the
-menu's default action).
+Double-left-clicking the tray icon toggles EdgeScroll on/off (it's the menu's default action).
 
-## Settings
+## Settings...
 
-- **Edge keys** — click a button next to an edge, then press a key to bind it.
-  Works with any key (letters, arrows, numpad, F-keys); modifiers are ignored so
-  Shift+W records `w`. Defaults are WASD.
-- **Start with Windows** — adds a `HKCU` Run entry so EdgeScroll launches at
-  login. Off by default.
+- **Edge keys** — Works with any key (letters, arrows, numpad, F-keys) but modifiers are ignored. Defaults are WASD.
+- **Start with Windows** — adds a `HKCU` Run entry so EdgeScroll launches at login. Off by default.
 
-## Config (`EdgeScroll.ini`, created on first toggle)
+## Config (`EdgeScroll.ini`, created on first toggle; can be completely ignored if you're not a nerd)
 
 ```ini
 [Settings]
@@ -78,14 +61,8 @@ TargetProcess=   ; empty = any process
 Autostart=0
 ```
 
-See `EdgeScroll.ini.example` for a starting point. The Settings window edits
-all of these at runtime — no need to touch the file by hand.
-
 ## Notes / limitations
 
-- **Multi-monitor:** only the primary monitor triggers. The cursor is also
-  stopped by the physical monitor edge, which is exactly the interaction.
-- **Elevated games:** Windows blocks input injection into admin processes;
-  run the script as Administrator to cover that case.
-- Fullscreen-exclusive titles that use raw input exclusively may still ignore
-  injected scancodes; borderless windowed is the most compatible.
+- **Multi-monitor:** only the primary monitor triggers. There is an 'ignore other monitors' setting for games that refuse to bind the mouse cursor. I don't recommend using this without a focused app set first.
+- **Elevated games:** Windows blocks input injection into admin processes; run the script as Administrator to cover that case.
+- Fullscreen-exclusive titles that use raw input exclusively may still ignore injected scancodes; borderless windowed is the most compatible.
