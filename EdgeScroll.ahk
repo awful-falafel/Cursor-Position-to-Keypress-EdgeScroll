@@ -298,7 +298,8 @@ ShowSettings(*) {
     pickBtn := settingsGui.AddButton("x16 y480 w280", "Choose from running windows...")
     pickBtn.OnEvent("Click", (*) => (ShowProcessPicker(), procEdit.Value := targetProcess))
 
-    settingsGui.AddButton("Default x16 y512 w90", "Save")
+    saveBtn := settingsGui.AddButton("Default x16 y512 w90", "Save")
+cancelBtn := settingsGui.AddButton("x118 y512 w90", "Cancel")
     settingsGui.OnEvent("Close", (*) => settingsGui.Destroy())
 
     saveBtn.OnEvent("Click", SaveSettings_Click)
