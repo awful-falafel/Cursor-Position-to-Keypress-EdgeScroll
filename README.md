@@ -1,4 +1,4 @@
-# Cursor Position to Mimic In-Game EdgeScrolling
+# Cursor position to mimic in-game edgescrolling
 
 Lightweight background app (AHK or EXE) that sends keypresses (default **WASD**) when the mouse cursor touches the extreme edges of the **primary monitor**.
 
@@ -40,7 +40,7 @@ Double-left-clicking the tray icon toggles EdgeScroll on/off (it's the menu's de
 - **Edge keys** — Works with any key (letters, arrows, numpad, F-keys) but modifiers are ignored. Defaults are WASD.
 - **Start with Windows** — adds a `HKCU` Run entry so EdgeScroll launches at login. Off by default.
 
-## Config (`EdgeScroll.ini`, created on first toggle; can be completely ignored if you're not a nerd)
+### Config (`EdgeScroll.ini`, created on first toggle; can be completely ignored if you're not a nerd)
 
 ```ini
 [Settings]
