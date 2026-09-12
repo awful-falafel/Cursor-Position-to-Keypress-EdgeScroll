@@ -296,11 +296,7 @@ ShowSettings(*) {
     settingsGui.AddText("x14 y412", "Focus process (empty = any process, e.g. game.exe)")
     procEdit := settingsGui.AddEdit("x14 y430 w280", targetProcess)
     pickBtn := settingsGui.AddButton("x14 y456 w280", "Choose from running windows...")
-    for b in procEdit, pickBtn
-        b.OnEvent("Click", (*) => (
-            ShowProcessPicker(),
-            procEdit.Value := targetProcess
-        ))
+    pickBtn.OnEvent("Click", (*) => (ShowProcessPicker(), procEdit.Value := targetProcess))
 
     saveBtn := settingsGui.AddButton("Default x14 y488 w90", "Save")
     cancelBtn := settingsGui.AddButton("x116 y488 w90", "Cancel")
